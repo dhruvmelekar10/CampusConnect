@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found (404) - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="py-5">
+    <div class="display-1 fw-bold text-navy" style="color: var(--primary-navy);">404</div>
+    <div class="brand-icon mx-auto my-3" style="width: 60px; height: 60px; font-size: 2rem;">
+      <i class="bi bi-question-diamond-fill"></i>
+    </div>
+    <h2 class="fw-bold text-navy mb-2">Item or Page Not Found</h2>
+    <p class="text-muted max-w-50 mx-auto mb-4" style="max-width: 500px;">
+      The lost or found record or campus page you are searching for does not exist, may have been removed, or has moved to an updated URL.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{{ url_for('main.index') }}" class="btn btn-navy rounded-pill px-4 text-white" style="background-color: var(--primary-navy);">
+        <i class="bi bi-house-door me-1"></i> Return Home
+      </a>
+      <a href="{{ url_for('item.search') }}" class="btn btn-outline-navy rounded-pill px-4">
+        <i class="bi bi-search me-1"></i> Search Catalog
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

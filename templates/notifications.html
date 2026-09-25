@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="section-title mb-1">Campus Notifications</h2>
+      <p class="text-muted mb-0">System updates, match alerts, and claim status notifications</p>
+    </div>
+    {% if notifications %}
+      <form method="POST" action="{{ url_for('main.mark_all_notifications_read') }}">
+        <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="bi bi-check2-all me-1"></i> Mark All as Read
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="list-group list-group-flush">
+        {% for notif in notifications %}
+          <div class="list-group-item p-3 d-flex align-items-start gap-3 {% if not notif.is_read %}bg-light border-start border-4 border-primary{% endif %}">
+            <!-- Type Icon -->
+            <div class="rounded-circle p-2 mt-1 d-flex align-items-center justify-content-center text-white" 
+                 style="width: 40px; height: 40px; min-width: 40px; background-color: 
+                 {% if notif.notification_type == 'match_found' %}#ff6b35
+                 {% elif notif.notification_type == 'claim_approved' %}#10b981
+                 {% elif notif.notification_type == 'claim_rejected' %}#ef4444
+                 {% elif notif.notification_type == 'item_returned' %}#0284c7
+                 {% else %}#64748b{% endif %};">
+              {% if notif.notification_type == 'match_found' %}
+                <i class="bi bi-magic fs-5"></i>
+              {% elif notif.notification_type == 'claim_approved' %}
+                <i class="bi bi-check-lg fs-5"></i>
+              {% elif notif.notification_type == 'claim_rejected' %}
+                <i class="bi bi-x-lg fs-5"></i>
+              {% elif notif.notification_type == 'item_returned' %}
+                <i class="bi bi-box-arrow-down fs-5"></i>
+              {% else %}
+                <i class="bi bi-bell-fill fs-5"></i>
+              {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="badge {% if notif.notification_type == 'match_found' %}bg-warning text-dark{% elif notif.notification_type == 'claim_approved' %}bg-success{% elif notif.notification_type == 'claim_rejected' %}bg-danger{% elif notif.notification_type == 'item_returned' %}bg-primary{% else %}bg-secondary{% endif %}">
+                  {{ notif.notification_type.replace('_', ' ').capitalize() }}
+                </span>
+                <small class="text-muted">{{ notif.created_at | format_date }}</small>
+              </div>
+
+              <p class="mb-1 text-dark">{{ notif.message }}</p>
+
+              {% if not notif.is_read %}
+                <form method="POST" action="{{ url_for('main.mark_notification_read', notif_id=notif.id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none small text-primary">
+                    <i class="bi bi-check me-1"></i> Mark as read
+                  </button>
+                </form>
+              {% else %}
+                <small class="text-muted"><i class="bi bi-check2"></i> Read</small>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-bell-slash"></i>
+      </div>
+      <h4 class="empty-state-title">No Notifications</h4>
+      <p class="empty-state-desc">You are all caught up! You will receive alerts here when automated matches occur or claim statuses change.</p>
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-navy rounded-pill px-4">Return to Dashboard</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

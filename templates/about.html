@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}About & Campus Guidelines - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header Banner -->
+  <div class="text-center max-w-75 mx-auto mb-5">
+    <span class="badge bg-primary text-white px-3 py-1 rounded-pill text-uppercase">Campus Policies & Algorithms</span>
+    <h1 class="display-5 fw-bold text-navy mt-2">About CampusConnect</h1>
+    <p class="lead text-muted">
+      Digital lost and found service developed for students, faculty, and administrative staff at 
+      <strong>VSIT (Vidyalankar School of Information Technology)</strong>.
+    </p>
+  </div>
+
+  <div class="row g-5">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <!-- Section 1: Institutional Mission -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h3 class="fw-bold text-navy mb-3"><i class="bi bi-shield-lock-fill text-primary me-2"></i> Purpose & Campus Policy</h3>
+        <p class="text-muted">
+          Every semester, hundreds of valuable possessions—including laptops, student IDs, keys, wallets, calculators, and study materials—are misplaced across lecture halls, labs, the central library, and the cafeteria.
+        </p>
+        <p class="text-muted">
+          <strong>CampusConnect</strong> eliminates scattered bulletin board notices, fragmented messaging groups, and lost inquiry logs by offering a centralized, transparent platform where lost items can be cross-referenced, verified, and safely returned.
+        </p>
+      </div>
+
+      <!-- Section 2: Smart Matching System Explained -->
+      <div id="matching" class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h3 class="fw-bold text-navy mb-3"><i class="bi bi-magic text-warning me-2"></i> Transparent Smart Matching Algorithm</h3>
+        <p class="text-muted">
+          CampusConnect features an automated, explainable scoring engine written in Python that compares newly reported items against existing records of the opposite type.
+        </p>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Matching Criterion</th>
+                <th>Points Awarded</th>
+                <th>Logic & Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Same Category</strong></td>
+                <td><span class="badge bg-success">+30 pts</span></td>
+                <td>Exact classification match (e.g. Laptop, Mobile Phone, ID Card).</td>
+              </tr>
+              <tr>
+                <td><strong>Similar Item Name</strong></td>
+                <td><span class="badge bg-success">+25 pts</span></td>
+                <td>Token overlap and sequence similarity ratio >= 60%.</td>
+              </tr>
+              <tr>
+                <td><strong>Same Brand</strong></td>
+                <td><span class="badge bg-success">+15 pts</span></td>
+                <td>Case-insensitive manufacturer or model brand correspondence.</td>
+              </tr>
+              <tr>
+                <td><strong>Same Color</strong></td>
+                <td><span class="badge bg-success">+10 pts</span></td>
+                <td>Color keyword or attribute match (e.g. Navy Blue, Silver, Black).</td>
+              </tr>
+              <tr>
+                <td><strong>Same or Nearby Location</strong></td>
+                <td><span class="badge bg-success">+10 pts</span></td>
+                <td>Common campus landmark, department block, or laboratory.</td>
+              </tr>
+              <tr>
+                <td><strong>Description Keywords</strong></td>
+                <td><span class="badge bg-success">+10 pts</span></td>
+                <td>Filtered significant keyword overlap in incident notes.</td>
+              </tr>
+              <tr class="table-info fw-bold">
+                <td>Total Possible Score</td>
+                <td>100 pts</td>
+                <td>Threshold for match discovery and user alert: <strong>>= 50 points</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <small class="text-muted">
+          * Matches meeting or exceeding 50 points automatically transition reports to 'Possible Match' status and generate in-app notifications to both parties.
+        </small>
+      </div>
+
+      <!-- Section 3: Frequently Asked Questions -->
+      <div id="faq" class="card border-0 shadow-sm rounded-4 p-4">
+        <h3 class="fw-bold text-navy mb-3"><i class="bi bi-question-circle-fill text-info me-2"></i> Frequently Asked Questions</h3>
+        
+        <div class="accordion accordion-flush" id="faqAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="faq1Heading">
+              <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                How do I claim an item I found in the catalog?
+              </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body text-muted">
+                Navigate to the item's detail page and click "Submit Claim". You must provide a valid ownership explanation and at least one private identifying detail (such as a lock-screen wallpaper, serial number, engraved initials, or specific contents). The campus admin will review this before authorizing pickup.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="faq2Heading">
+              <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                Why are phone numbers and sensitive contact details not displayed publicly?
+              </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body text-muted">
+                To prevent fraudulent claims, student harassment, and identity misuse, direct contact info is protected. All claims flow through the verified administrative desk.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="faq3Heading">
+              <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                Where is the physical Lost & Found Helpdesk located?
+              </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body text-muted">
+                VSIT Central Administrative Block, Room 104 (Ground Floor), Vidyalankar Educational Campus, Wadala. Operating hours are Monday through Friday, 9:00 AM – 5:00 PM.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Guidelines -->
+    <div class="col-lg-4">
+      <div id="guidelines" class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-navy text-white" style="background-color: var(--primary-navy);">
+        <h4 class="fw-bold mb-3"><i class="bi bi-bell-fill text-warning me-2"></i> Campus Protocols</h4>
+        <ul class="list-unstyled d-flex flex-column gap-3 small text-light">
+          <li class="d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+            <span>Found items of high value (laptops, phones, wallets) should be deposited at the Security / Admin desk within 24 hours.</span>
+          </li>
+          <li class="d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+            <span>Always take clear, well-lit photos when reporting items to improve matching confidence.</span>
+          </li>
+          <li class="d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle-fill text-warning mt-1"></i>
+            <span>Do not disclose secret identifying marks publicly in descriptions—reserve them for verification claims.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+        <i class="bi bi-mortarboard-fill text-primary display-4 mb-2"></i>
+        <h5 class="fw-bold text-navy">VSIT (Vidyalankar School of Information Technology)</h5>
+        <p class="text-muted small">
+          Academic Innovation & Student Welfare Division. CampusConnect Lost & Found Project.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

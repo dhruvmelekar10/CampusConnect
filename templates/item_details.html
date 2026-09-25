@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.item_name }} - Details - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('item.search') }}" class="text-decoration-none">Catalog</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ item.item_name }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Item Image & Visuals -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="bg-light position-relative text-center p-4 d-flex align-items-center justify-content-center" style="min-height: 340px;">
+          {% if item.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" alt="{{ item.item_name }}" class="img-fluid rounded-3 shadow-sm" style="max-height: 380px; object-fit: contain;">
+          {% else %}
+            <div class="text-muted text-center py-5">
+              <i class="bi bi-camera-slash fs-1 d-block mb-2 text-secondary"></i>
+              <span>No image provided by reporter</span>
+            </div>
+          {% endif %}
+
+          <span class="item-type-badge {% if item.item_type == 'Lost' %}badge-lost-type{% else %}badge-found-type{% endif %}">
+            {{ item.item_type }} Report
+          </span>
+        </div>
+
+        <div class="card-footer bg-white border-top p-3 d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Report #{{ item.id }}</span>
+          <span class="badge-status badge-status-{{ item.status.lower().replace(' ', '-') }}">
+            {{ item.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Action Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+        {% if item.item_type == 'Found' %}
+          <h5 class="fw-bold text-navy mb-2">Is this your item?</h5>
+          <p class="text-muted small mb-3">
+            If you believe this found belonging is yours, submit a formal claim with private identifying proof for administrative verification.
+          </p>
+
+          {% if current_user %}
+            {% if item.reporter_id == current_user.id %}
+              <div class="alert alert-secondary py-2 small mb-0">
+                You reported this found item.
+              </div>
+            {% elif user_claim %}
+              <div class="alert alert-info py-2 small mb-0">
+                <i class="bi bi-clock-history me-1"></i> You submitted a claim for this item. 
+                <strong>Status: {{ user_claim.status }}</strong>
+              </div>
+            {% elif item.status in ['Open', 'Possible Match', 'Claim Pending'] %}
+              <a href="{{ url_for('claim.submit_claim', item_id=item.id) }}" class="btn btn-orange w-100 rounded-pill py-2 fw-bold shadow-sm">
+                <i class="bi bi-shield-check me-1"></i> Submit Ownership Claim
+              </a>
+            {% else %}
+              <div class="alert alert-light border py-2 small mb-0 text-muted">
+                This item is {{ item.status.lower() }} and is no longer accepting claims.
+              </div>
+            {% endif %}
+          {% else %}
+            <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-outline-navy w-100 rounded-pill py-2 fw-bold">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Log in to Submit Claim
+            </a>
+          {% endif %}
+
+        {% else %}
+          <!-- Lost Item Action -->
+          <h5 class="fw-bold text-navy mb-2">Did you find this item?</h5>
+          <p class="text-muted small mb-3">
+            If you have recovered this lost belonging, please report it or deposit it at the campus Lost & Found desk.
+          </p>
+          <a href="{{ url_for('item.report_found') }}" class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm">
+            <i class="bi bi-check2-circle me-1"></i> Report as Found
+          </a>
+        {% endif %}
+
+        <!-- Safe In-App Contact Button -->
+        <button type="button" class="btn btn-light border text-navy w-100 rounded-pill py-2 fw-bold mt-2" data-bs-toggle="modal" data-bs-target="#contactModal">
+          <i class="bi bi-shield-lock text-primary me-1"></i> Contact Reporter
+        </button>
+
+        <!-- Reporter / Admin Controls -->
+        {% if current_user and (current_user.id == item.reporter_id or current_user.is_admin) %}
+          <div class="d-flex gap-2 mt-3 pt-3 border-top justify-content-center">
+            {% if item.status in ['Open', 'Possible Match'] or current_user.is_admin %}
+              <a href="{{ url_for('item.edit_item', item_id=item.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-pencil me-1"></i> Edit Report
+              </a>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('item.delete_item', item_id=item.id) }}" class="d-inline confirm-delete-form" data-item-name="{{ item.item_name }}">
+              <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                <i class="bi bi-trash me-1"></i> Delete
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Complete Details Sheet -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="badge bg-warning text-dark text-uppercase px-3 py-1 rounded-pill fw-bold">
+            {{ item.category }}
+          </span>
+          <small class="text-muted">
+            <i class="bi bi-calendar3 me-1"></i> Reported: {{ item.created_at | format_date }}
+          </small>
+        </div>
+
+        <h2 class="fw-bold text-navy mb-3">{{ item.item_name }}</h2>
+
+        <div class="p-3 bg-light rounded-3 mb-4">
+          <h6 class="fw-bold text-navy mb-2"><i class="bi bi-card-text text-primary me-2"></i> Item Description</h6>
+          <p class="text-muted mb-0" style="white-space: pre-line;">{{ item.description }}</p>
+        </div>
+
+        <!-- Attribute Specification Grid -->
+        <h5 class="fw-bold text-navy mb-3">Item Specifications</h5>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Campus Location</small>
+              <div class="fw-bold text-navy"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ item.location }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Incident Date & Time</small>
+              <div class="fw-bold text-navy">
+                <i class="bi bi-clock-fill text-primary me-1"></i> 
+                {{ item.item_date | format_date }} 
+                {% if item.approximate_time %}({{ item.approximate_time }}){% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Brand / Manufacturer</small>
+              <div class="fw-bold text-navy">{{ item.brand or 'Not specified' }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Color(s)</small>
+              <div class="fw-bold text-navy">{{ item.color or 'Not specified' }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Identifying Marks</small>
+              <div class="fw-bold text-navy">{{ item.identifying_marks or 'None stated' }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 border rounded-3 h-100">
+              <small class="text-muted text-uppercase fw-semibold d-block mb-1">Estimated Value</small>
+              <div class="fw-bold text-navy">{{ item.estimated_value | format_currency }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reporter Attribution (Without leaking phone or sensitive passwords) -->
+        <div class="p-3 border-start border-4 border-primary bg-light rounded-end">
+          <div class="small text-muted">Published by</div>
+          <div class="fw-bold text-navy">{{ item.reporter.full_name }}</div>
+          <div class="small text-muted">{{ item.reporter.department or 'Campus Member' }} &bull; {{ item.reporter.role.capitalize() }}</div>
+        </div>
+      </div>
+
+      <!-- Possible Matches for this specific Item -->
+      {% if matches %}
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <h5 class="fw-bold text-navy mb-3">
+            <i class="bi bi-magic text-warning me-2"></i> Possible Matches for this Item ({{ matches | length }})
+          </h5>
+          <div class="d-flex flex-column gap-3">
+            {% for m in matches %}
+              {% set counterpart = m.found_item if item.item_type == 'Lost' else m.lost_item %}
+              <div class="p-3 border rounded-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="match-score-badge py-1 px-2 small">{{ m.match_score }}% Match</span>
+                    <a href="{{ url_for('item.item_details', item_id=counterpart.id) }}" class="fw-bold text-navy text-decoration-none">
+                      {{ counterpart.item_name }} ({{ counterpart.item_type }})
+                    </a>
+                  </div>
+                  <div class="small text-muted">
+                    <i class="bi bi-geo-alt me-1"></i> {{ counterpart.location }} &bull; 
+                    <i class="bi bi-calendar3 me-1"></i> {{ counterpart.item_date | format_date }}
+                  </div>
+                  <div class="small text-dark mt-1">
+                    <strong>Match factors:</strong> {{ m.match_reason }}
+                  </div>
+                </div>
+
+                <a href="{{ url_for('item.item_details', item_id=counterpart.id) }}" class="btn btn-sm btn-outline-navy rounded-pill text-nowrap">
+                  View Matching Item <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Safe Contact Information Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4 border-0">
+      <div class="modal-header bg-navy text-white" style="background-color: var(--primary-navy);">
+        <h5 class="modal-title fw-bold" id="contactModalLabel">
+          <i class="bi bi-shield-check me-2 text-warning"></i> Campus Security & Privacy Notice
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted">
+          In accordance with <strong>VSIT's Student Privacy Guidelines</strong>, direct personal contact details are withheld to prevent fraud and harassment.
+        </p>
+        
+        <div class="p-3 bg-light rounded-3 border mb-3 small">
+          <div class="fw-bold text-navy mb-1"><i class="bi bi-building me-1 text-primary"></i> VSIT Verification Helpdesk</div>
+          <div>Location: VSIT Admin Block, Ground Floor, Room 104</div>
+          <div>Email: <code>lostfound@vsit.edu.in</code></div>
+          <div>Helpline: +91 22 2416 1126</div>
+        </div>
+
+        {% if item.item_type == 'Found' %}
+          <p class="small text-muted mb-0">
+            To claim this item, please click the <strong>Submit Ownership Claim</strong> button on this page. The campus administration will verify your claim before returning the item.
+          </p>
+        {% else %}
+          <p class="small text-muted mb-0">
+            If you have found this lost item, please deposit it at the Lost & Found Helpdesk or click <strong>Report as Found</strong> to alert the owner.
+          </p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

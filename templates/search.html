@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Catalog - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="section-title mb-1">Campus Lost & Found Catalog</h2>
+      <p class="text-muted mb-0">Search and filter reported items across VSIT (Vidyalankar School of Information Technology)</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('item.report_lost') }}" class="btn btn-danger btn-sm rounded-pill px-3">
+        <i class="bi bi-exclamation-octagon me-1"></i> Report Lost
+      </a>
+      <a href="{{ url_for('item.report_found') }}" class="btn btn-success btn-sm rounded-pill px-3">
+        <i class="bi bi-check-circle me-1"></i> Report Found
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Filter Sidebar -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 85px; z-index: 10;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-navy mb-0"><i class="bi bi-funnel text-primary me-1"></i> Filters</h5>
+          <a href="{{ url_for('item.search') }}" class="small text-danger text-decoration-none">Reset All</a>
+        </div>
+
+        <form method="GET" action="{{ url_for('item.search') }}">
+          <!-- Keyword Search -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Keywords</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+              <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="e.g. Dell, Wallet, Keys">
+            </div>
+          </div>
+
+          <!-- Item Type -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Report Type</label>
+            <select name="item_type" class="form-select form-select-sm">
+              <option value="">All Types (Lost & Found)</option>
+              {% for t in item_types %}
+                <option value="{{ t }}" {% if selected_type == t %}selected{% endif %}>{{ t }} Only</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Category -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Category</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">All Categories</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Status</label>
+            <select name="status" class="form-select form-select-sm">
+              <option value="">All Statuses</option>
+              {% for st in statuses %}
+                <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Campus Location -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Campus Location</label>
+            <input type="text" name="location" class="form-control form-control-sm" value="{{ location }}" placeholder="e.g. Library, Canteen, Lab">
+          </div>
+
+          <!-- Brand & Color -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Brand</label>
+              <input type="text" name="brand" class="form-control form-control-sm" value="{{ brand }}" placeholder="HP, Apple">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Color</label>
+              <input type="text" name="color" class="form-control form-control-sm" value="{{ color }}" placeholder="Black, Blue">
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Date Range</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}" title="From Date">
+              </div>
+              <div class="col-6">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}" title="To Date">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Sort By</label>
+            <select name="sort" class="form-select form-select-sm">
+              <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+              <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+              <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Item Name (A-Z)</option>
+              <option value="location_asc" {% if sort_by == 'location_asc' %}selected{% endif %}>Location (A-Z)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-navy btn-sm w-100 rounded-pill py-2 fw-bold text-white shadow-sm" style="background-color: var(--primary-navy);">
+            <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Items Grid & Results -->
+    <div class="col-lg-9">
+      <!-- Result Bar -->
+      <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white rounded-3 border">
+        <span class="text-muted small">
+          Showing <strong>{{ items | length }}</strong> of <strong>{{ pagination.total }}</strong> item(s) found
+        </span>
+        <span class="badge bg-light text-navy border">
+          Page {{ pagination.page }} of {{ pagination.pages or 1 }}
+        </span>
+      </div>
+
+      {% if items %}
+        <div class="row g-4 mb-4">
+          {% for item in items %}
+            <div class="col-md-6 col-xl-4">
+              <div class="item-card">
+                <div class="item-card-image-wrapper">
+                  {% if item.image_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" alt="{{ item.item_name }}" class="item-card-img">
+                  {% else %}
+                    <div class="item-card-placeholder">
+                      <i class="bi bi-box-seam"></i>
+                    </div>
+                  {% endif %}
+
+                  <span class="item-type-badge {% if item.item_type == 'Lost' %}badge-lost-type{% else %}badge-found-type{% endif %}">
+                    {{ item.item_type }}
+                  </span>
+
+                  <span class="item-status-pill">
+                    {{ item.status }}
+                  </span>
+                </div>
+
+                <div class="item-card-body">
+                  <div class="item-card-category">{{ item.category }}</div>
+                  <h5 class="item-card-title">{{ item.item_name }}</h5>
+                  <p class="item-card-desc">{{ item.description }}</p>
+
+                  <div class="small text-muted mb-3 d-flex flex-column gap-1">
+                    <div><i class="bi bi-geo-alt text-danger me-1"></i> <strong>Location:</strong> {{ item.location }}</div>
+                    <div><i class="bi bi-calendar3 text-primary me-1"></i> <strong>Date:</strong> {{ item.item_date | format_date }}</div>
+                    {% if item.estimated_value %}
+                      <div><i class="bi bi-cash-stack text-success me-1"></i> <strong>Est. Value:</strong> {{ item.estimated_value | format_currency }}</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="item-card-meta">
+                    <span><i class="bi bi-clock me-1"></i> {{ item.created_at | format_date }}</span>
+                    <a href="{{ url_for('item.item_details', item_id=item.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                      View Details <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {% if pagination.has_prev %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('item.search', page=pagination.prev_num, q=q, category=selected_category, item_type=selected_type, brand=brand, color=color, location=location, status=selected_status, date_from=date_from, date_to=date_to, sort=sort_by) }}">Previous</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+
+              {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+                {% if p %}
+                  {% if p == pagination.page %}
+                    <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                  {% else %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('item.search', page=p, q=q, category=selected_category, item_type=selected_type, brand=brand, color=color, location=location, status=selected_status, date_from=date_from, date_to=date_to, sort=sort_by) }}">{{ p }}</a>
+                    </li>
+                  {% endif %}
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if pagination.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('item.search', page=pagination.next_num, q=q, category=selected_category, item_type=selected_type, brand=brand, color=color, location=location, status=selected_status, date_from=date_from, date_to=date_to, sort=sort_by) }}">Next</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-search"></i>
+          </div>
+          <h4 class="empty-state-title">No Matching Items Found</h4>
+          <p class="empty-state-desc">We couldn't find any lost or found items matching your current filters. Try relaxing your search terms or clearing specific categories.</p>
+          <a href="{{ url_for('item.search') }}" class="btn btn-outline-navy rounded-pill px-4">Clear All Filters</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

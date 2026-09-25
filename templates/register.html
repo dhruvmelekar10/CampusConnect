@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="bg-navy p-4 text-center text-white" style="background-color: var(--primary-navy);">
+          <div class="brand-icon mx-auto mb-2">
+            <i class="bi bi-person-plus-fill"></i>
+          </div>
+          <h4 class="fw-bold mb-1">Create VSIT Account</h4>
+          <p class="small text-white-50 mb-0">Join VSIT (Vidyalankar School of Information Technology) CampusConnect</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" action="{{ url_for('auth.register') }}">
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="full_name" class="form-label fw-semibold">Full Name *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                  <input type="text" class="form-control border-start-0" id="full_name" name="full_name" value="{{ full_name or '' }}" placeholder="Aarav Sharma" required>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label for="email" class="form-label fw-semibold">Campus Email Address *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                  <input type="email" class="form-control border-start-0" id="email" name="email" value="{{ email or '' }}" placeholder="aarav.sharma@vsit.edu.in" required>
+                </div>
+                <div class="form-text">Please provide your institutional email address.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="role" class="form-label fw-semibold">Campus Role *</label>
+                <select class="form-select" id="role" name="role" required>
+                  <option value="student" {% if role == 'student' %}selected{% endif %}>Student</option>
+                  <option value="staff" {% if role == 'staff' %}selected{% endif %}>Faculty / Staff</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="department" class="form-label fw-semibold">Department / Branch</label>
+                <input type="text" class="form-control" id="department" name="department" value="{{ department or '' }}" placeholder="B.Sc. Information Technology">
+              </div>
+
+              <div class="col-12">
+                <label for="phone" class="form-label fw-semibold">Contact Phone (Private)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone text-muted"></i></span>
+                  <input type="tel" class="form-control border-start-0" id="phone" name="phone" value="{{ phone or '' }}" placeholder="+91 98765 43210">
+                </div>
+                <div class="form-text">Phone numbers are kept strictly private and used only for verified claim recovery.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="password" class="form-label fw-semibold">Password *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                  <input type="password" class="form-control border-start-0" id="password" name="password" placeholder="At least 6 characters" required minlength="6">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="confirm_password" class="form-label fw-semibold">Confirm Password *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-check text-muted"></i></span>
+                  <input type="password" class="form-control border-start-0" id="confirm_password" name="confirm_password" placeholder="Re-enter password" required minlength="6">
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-orange w-100 py-2 rounded-pill fw-bold shadow-sm">
+                <i class="bi bi-person-check-fill me-1"></i> Register Account
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-4">
+            <p class="text-muted small mb-0">
+              Already have an account? 
+              <a href="{{ url_for('auth.login') }}" class="fw-bold text-decoration-none" style="color: var(--accent-orange);">
+                Sign in here
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

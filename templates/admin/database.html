@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Database Explorer - {{ college_short_name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb & Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin Center</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Database Management</li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold mb-1">
+        <i class="bi bi-database text-primary me-2"></i>Database Explorer & Management
+      </h2>
+      <p class="text-muted small mb-0">
+        Live SQLite3 relational repository and SQL execution console for {{ college_name }}.
+      </p>
+    </div>
+
+    <!-- Quick Export Actions -->
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.download_db') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+        <i class="bi bi-download me-1"></i> Download .db File
+      </a>
+      <a href="{{ url_for('admin.download_sql') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+        <i class="bi bi-file-earmark-code me-1"></i> Download .sql Script
+      </a>
+    </div>
+  </div>
+
+  <!-- Database Health & Status Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary fs-4">
+            <i class="bi bi-hdd-fill"></i>
+          </div>
+          <div>
+            <div class="text-muted small fw-semibold">Database Size</div>
+            <div class="fs-4 fw-bold text-dark">{{ size_kb }} <span class="fs-6 text-muted font-monospace">KB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success fs-4">
+            <i class="bi bi-layers-fill"></i>
+          </div>
+          <div>
+            <div class="text-muted small fw-semibold">Total Records</div>
+            <div class="fs-4 fw-bold text-dark">{{ total_records }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3 text-info fs-4">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <div>
+            <div class="text-muted small fw-semibold">SQLite Engine</div>
+            <div class="fs-4 fw-bold text-dark">v{{ sqlite_version }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success fs-4">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div>
+            <div class="text-muted small fw-semibold">Integrity Status</div>
+            <div class="fs-5 fw-bold text-success">{{ integrity.upper() }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive SQL Query Console -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="bi bi-terminal me-2 text-warning"></i>Live SQL Query Console
+      </h5>
+      <span class="badge bg-light text-secondary border">Read-Only Sandbox (SELECT / PRAGMA)</span>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('admin.database_view') }}">
+        <div class="mb-2">
+          <label for="queryInput" class="form-label small fw-bold text-muted">
+            Enter SQL Query to execute directly against SQLite:
+          </label>
+          <textarea
+            class="form-control font-monospace text-dark bg-light rounded-3"
+            id="queryInput"
+            name="query"
+            rows="3"
+            placeholder="SELECT item_name, category, estimated_value FROM items WHERE item_type = 'Lost' ORDER BY estimated_value DESC;"
+            required>{{ custom_query }}</textarea>
+        </div>
+
+        <!-- Preset Query Chips for Presentations -->
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <span class="small text-muted fw-semibold">Quick Templates:</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setQuery('SELECT id, item_name, category, estimated_value, location FROM items WHERE item_type = \'Lost\' ORDER BY estimated_value DESC;')">
+            Top Valued Lost Items
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setQuery('SELECT c.id, i.item_name, u.full_name AS claimant, c.status, c.created_at FROM claims c JOIN items i ON c.item_id = i.id JOIN users u ON c.claimant_id = u.id;')">
+            Claims with Claimant Info
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setQuery('SELECT m.id, l.item_name AS lost_item, f.item_name AS found_item, m.match_score, m.match_reason FROM matches m JOIN items l ON m.lost_item_id = l.id JOIN items f ON m.found_item_id = f.id;')">
+            Automated Item Matches
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setQuery('SELECT role, department, COUNT(*) AS total_users FROM users GROUP BY role, department;')">
+            Users by Department
+          </button>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-play-fill me-1"></i> Execute SQL Query
+          </button>
+          {% if query_time is not none %}
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle me-1"></i> Executed in {{ query_time }} ms
+            </span>
+          {% endif %}
+        </div>
+      </form>
+
+      <!-- Query Errors -->
+      {% if query_error %}
+        <div class="alert alert-danger mt-3 rounded-3 mb-0" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Query Error:</strong> {{ query_error }}
+        </div>
+      {% endif %}
+
+      <!-- Query Results Table -->
+      {% if query_result is not none %}
+        <div class="mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 text-dark">Query Results ({{ query_result|length }} rows):</h6>
+          </div>
+          {% if query_result %}
+            <div class="table-responsive rounded-3 border">
+              <table class="table table-hover table-striped align-middle mb-0 font-monospace small">
+                <thead class="table-dark">
+                  <tr>
+                    {% for h in query_headers %}
+                      <th class="py-2 px-3">{{ h }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in query_result %}
+                    <tr>
+                      {% for val in row %}
+                        <td class="py-2 px-3 text-nowrap">{{ val if val is not none else 'NULL' }}</td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-muted p-3 bg-light rounded text-center small">Query returned 0 rows.</div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Live Table Browser Section -->
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-bottom py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-table me-2 text-primary"></i>Table Browser: 
+          <span class="text-primary">{{ selected_table }}</span>
+          <span class="badge bg-secondary ms-2">{{ counts[selected_table] }} records</span>
+        </h5>
+        <!-- Table Navigation Pills -->
+        <ul class="nav nav-pills small gap-1">
+          {% for t in tables %}
+            <li class="nav-item">
+              <a class="nav-link py-1 px-3 rounded-pill {% if selected_table == t %}active fw-bold{% endif %}" 
+                 href="{{ url_for('admin.database_view', table=t) }}">
+                {{ t }} <span class="badge {% if selected_table == t %}bg-white text-primary{% else %}bg-secondary bg-opacity-25 text-dark{% endif %} ms-1">{{ counts[t] }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      {% if table_rows %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 font-monospace small">
+            <thead class="table-light border-bottom">
+              <tr>
+                {% for col in table_headers %}
+                  <th class="py-3 px-3 text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in table_rows %}
+                <tr>
+                  {% for val in row %}
+                    <td class="py-2 px-3 text-nowrap">
+                      {% if val is none %}
+                        <span class="text-muted fst-italic">NULL</span>
+                      {% elif val == 'Open' or val == 'Possible Match' %}
+                        <span class="badge bg-warning text-dark">{{ val }}</span>
+                      {% elif val == 'Returned' or val == 'Approved' or val == 'Completed' %}
+                        <span class="badge bg-success">{{ val }}</span>
+                      {% elif val == 'Claim Approved' or val == 'Claim Pending' %}
+                        <span class="badge bg-info text-dark">{{ val }}</span>
+                      {% elif val == 'Lost' %}
+                        <span class="badge bg-danger">{{ val }}</span>
+                      {% elif val == 'Found' %}
+                        <span class="badge bg-success">{{ val }}</span>
+                      {% elif val|string|length > 60 %}
+                        <span title="{{ val }}">{{ val|string|truncate(60) }}</span>
+                      {% else %}
+                        {{ val }}
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+          <span>No records present in table '{{ selected_table }}'.</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card-footer bg-white border-top p-3 d-flex justify-content-between align-items-center small text-muted">
+      <span>Showing first 50 rows of <strong>{{ selected_table }}</strong>. Total rows: {{ counts[selected_table] }}.</span>
+      <span>Engine: SQLite 3 | Database: <code>lost_found.db</code></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setQuery(sql) {
+  document.getElementById('queryInput').value = sql;
+}
+</script>
+{% endblock %}

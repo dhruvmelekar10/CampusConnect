@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrative Dashboard - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Admin Header -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-navy text-white" style="background-color: var(--primary-navy);">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <span class="badge bg-danger mb-2 px-3 py-1 rounded-pill fw-bold">Admin Console</span>
+        <h2 class="fw-bold mb-1">Campus Administration Center</h2>
+        <p class="text-white-50 mb-0">
+          VSIT (Vidyalankar School of Information Technology) &bull; Lost & Found Oversight & Claims Verification
+        </p>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('admin.claims') }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
+          <i class="bi bi-clipboard-check me-1"></i> Review Claims ({{ pending_claims_count }})
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+          <i class="bi bi-people me-1"></i> User Directory
+        </a>
+        <a href="{{ url_for('admin.database_view') }}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
+          <i class="bi bi-database me-1"></i> Database Explorer
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="metric-card">
+        <div class="metric-icon purple">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <div class="metric-value">{{ total_users }}</div>
+          <div class="metric-label">Registered Users</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+      <div class="metric-card">
+        <div class="metric-icon orange">
+          <i class="bi bi-hourglass-top"></i>
+        </div>
+        <div>
+          <div class="metric-value">{{ pending_claims_count }}</div>
+          <div class="metric-label">Pending Claims</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+      <div class="metric-card">
+        <div class="metric-icon green">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div>
+          <div class="metric-value">{{ returned_items_count }}</div>
+          <div class="metric-label">Items Returned</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+      <div class="metric-card">
+        <div class="metric-icon navy">
+          <i class="bi bi-magic"></i>
+        </div>
+        <div>
+          <div class="metric-value">{{ total_matches }}</div>
+          <div class="metric-label">Smart Matches</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary Metrics: Lost, Found, Open -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small fw-semibold">TOTAL LOST REPORTS</div>
+          <div class="fs-4 fw-bold text-danger">{{ total_lost }}</div>
+        </div>
+        <i class="bi bi-search fs-2 text-danger opacity-50"></i>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small fw-semibold">TOTAL FOUND REPORTS</div>
+          <div class="fs-4 fw-bold text-success">{{ total_found }}</div>
+        </div>
+        <i class="bi bi-box-seam fs-2 text-success opacity-50"></i>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 bg-white rounded-3 border d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small fw-semibold">ACTIVE OPEN REPORTS</div>
+          <div class="fs-4 fw-bold text-primary">{{ open_reports }}</div>
+        </div>
+        <i class="bi bi-folder-check fs-2 text-primary opacity-50"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytical Charts Section -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: Lost vs Found Distribution -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h6 class="fw-bold text-navy mb-0">Lost vs Found Ratio</h6>
+        </div>
+        <div class="card-body p-4 d-flex align-items-center justify-content-center">
+          <div style="max-width: 250px; width: 100%;">
+            <canvas id="chartLostVsFound"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Items by Category -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h6 class="fw-bold text-navy mb-0">Inventory by Category</h6>
+        </div>
+        <div class="card-body p-4">
+          <canvas id="chartCategories" style="max-height: 240px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 3: Reports by Status -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h6 class="fw-bold text-navy mb-0">Reports by Status</h6>
+        </div>
+        <div class="card-body p-4 d-flex align-items-center justify-content-center">
+          <div style="max-width: 220px; width: 100%;">
+            <canvas id="chartStatuses"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Claims Table -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold text-navy mb-0">
+        <i class="bi bi-hourglass-split text-warning me-2"></i> Pending Claims Requiring Review
+      </h5>
+      <a href="{{ url_for('admin.claims') }}" class="btn btn-sm btn-link text-decoration-none">View All Claims</a>
+    </div>
+    <div class="card-body p-4">
+      {% if pending_claims %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th>Item Claimed</th>
+                <th>Claimant</th>
+                <th>Rationale & Identifying Marks</th>
+                <th>Submitted</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for claim in pending_claims %}
+                <tr>
+                  <td>
+                    <a href="{{ url_for('item.item_details', item_id=claim.item.id) }}" class="fw-bold text-navy text-decoration-none">
+                      {{ claim.item.item_name }}
+                    </a><br>
+                    <small class="text-muted">{{ claim.item.category }} &bull; Found at: {{ claim.item.location }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ claim.claimant.full_name }}</strong><br>
+                    <small class="text-muted">{{ claim.claimant.email }}</small>
+                  </td>
+                  <td>
+                    <div class="small"><strong>Reason:</strong> {{ claim.claim_reason }}</div>
+                    <div class="small text-danger"><strong>Confidential Mark:</strong> {{ claim.private_detail }}</div>
+                  </td>
+                  <td class="small text-muted">{{ claim.created_at | format_date }}</td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-1">
+                      <!-- Approve Button & Modal Trigger -->
+                      <button type="button" class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#approveModal{{ claim.id }}">
+                        <i class="bi bi-check-lg"></i> Approve
+                      </button>
+
+                      <!-- Reject Button & Modal Trigger -->
+                      <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#rejectModal{{ claim.id }}">
+                        <i class="bi bi-x-lg"></i> Reject
+                      </button>
+                    </div>
+
+                    <!-- Approve Modal -->
+                    <div class="modal fade" id="approveModal{{ claim.id }}" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog text-start">
+                        <div class="modal-content">
+                          <form method="POST" action="{{ url_for('admin.approve_claim', claim_id=claim.id) }}">
+                            <div class="modal-header">
+                              <h5 class="modal-title fw-bold text-success"><i class="bi bi-check-circle me-1"></i> Approve Ownership Claim</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              <p>Confirming approval for <strong>{{ claim.claimant.full_name }}</strong> on item <strong>{{ claim.item.item_name }}</strong>.</p>
+                              <div class="mb-3">
+                                <label class="form-label small fw-semibold">Administrative Comment / Pickup Instruction</label>
+                                <textarea name="admin_comment" class="form-control" rows="3" placeholder="Visit VSIT Admin Block Room 104 with VSIT student ID card."></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-success">Confirm Approval</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal{{ claim.id }}" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog text-start">
+                        <div class="modal-content">
+                          <form method="POST" action="{{ url_for('admin.reject_claim', claim_id=claim.id) }}">
+                            <div class="modal-header">
+                              <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-1"></i> Reject Ownership Claim</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              <p>Rejecting claim for <strong>{{ claim.claimant.full_name }}</strong> on item <strong>{{ claim.item.item_name }}</strong>.</p>
+                              <div class="mb-3">
+                                <label class="form-label small fw-semibold">Reason for Rejection</label>
+                                <textarea name="admin_comment" class="form-control" rows="3" placeholder="Identifying details did not correspond with physical item markings."></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-check2-all fs-2 text-success d-block mb-2"></i>
+          All claims have been processed! No pending claims requiring attention.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Reports & Returned Items Split -->
+  <div class="row g-4">
+    <!-- Recent Incident Reports -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-navy mb-0"><i class="bi bi-clock-history text-primary me-2"></i> Recent Incident Reports</h5>
+          <a href="{{ url_for('item.search') }}" class="btn btn-sm btn-link text-decoration-none">Search All</a>
+        </div>
+        <div class="card-body p-4">
+          {% if recent_reports %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                  <tr>
+                    <th>Type</th>
+                    <th>Item</th>
+                    <th>Reporter</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in recent_reports %}
+                    <tr>
+                      <td>
+                        <span class="badge {% if item.item_type == 'Lost' %}bg-danger{% else %}bg-success{% endif %}">
+                          {{ item.item_type }}
+                        </span>
+                      </td>
+                      <td>
+                        <a href="{{ url_for('item.item_details', item_id=item.id) }}" class="fw-bold text-navy text-decoration-none">
+                          {{ item.item_name }}
+                        </a><br>
+                        <small class="text-muted">{{ item.location }}</small>
+                      </td>
+                      <td>
+                        <span class="small">{{ item.reporter.full_name }}</span><br>
+                        <small class="text-muted">{{ item.reporter.email }}</small>
+                      </td>
+                      <td>
+                        <span class="badge-status badge-status-{{ item.status.lower().replace(' ', '-') }}">
+                          {{ item.status }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                          <a href="{{ url_for('item.item_details', item_id=item.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill" title="View Details">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <a href="{{ url_for('item.edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary rounded-pill" title="Edit Item">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                          {% if item.status != 'Returned' %}
+                            <form method="POST" action="{{ url_for('admin.mark_returned', item_id=item.id) }}" class="d-inline">
+                              <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Mark Returned" onclick="return confirm('Mark this item as Returned to owner?')">
+                                <i class="bi bi-check2"></i>
+                              </button>
+                            </form>
+                          {% endif %}
+                          <form method="POST" action="{{ url_for('item.delete_item', item_id=item.id) }}" class="d-inline confirm-delete-form" data-item-name="{{ item.item_name }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Report">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recently Returned Items -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h5 class="fw-bold text-navy mb-0"><i class="bi bi-check2-circle text-success me-2"></i> Successfully Returned</h5>
+        </div>
+        <div class="card-body p-4">
+          {% if returned_items %}
+            <div class="d-flex flex-column gap-3">
+              {% for ret in returned_items %}
+                <div class="p-3 border rounded-3 bg-light">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <span class="fw-bold text-navy">{{ ret.item_name }}</span>
+                    <span class="badge bg-success">Returned</span>
+                  </div>
+                  <small class="text-muted d-block">{{ ret.category }} &bull; {{ ret.location }}</small>
+                  <small class="text-muted d-block mt-1">
+                    <i class="bi bi-clock me-1"></i> Updated: {{ ret.updated_at | format_date }}
+                  </small>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+              No returned records logged yet.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.adminChartData = {{ chart_data | tojson }};
+</script>
+{% endblock %}

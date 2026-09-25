@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if is_submit_form %}Claim Item: {{ item.item_name }}{% else %}My Claims{% endif %} - CampusConnect
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  {% if is_submit_form %}
+    <!-- Submit Claim Form View -->
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <!-- Item Overview Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+          <div class="d-flex align-items-center gap-3">
+            {% if item.image_filename %}
+              <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" alt="{{ item.item_name }}" class="rounded-3" style="width: 80px; height: 80px; object-fit: cover;">
+            {% else %}
+              <div class="bg-white rounded-3 p-3 text-muted border text-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-box-seam fs-2"></i>
+              </div>
+            {% endif %}
+            <div>
+              <span class="badge bg-success mb-1">Found Item Report #{{ item.id }}</span>
+              <h4 class="fw-bold text-navy mb-1">{{ item.item_name }}</h4>
+              <p class="text-muted small mb-0">
+                <strong>Found at:</strong> {{ item.location }} &bull; 
+                <strong>Date:</strong> {{ item.item_date | format_date }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claim Verification Form -->
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="p-4 bg-navy text-white text-center" style="background-color: var(--primary-navy);">
+            <div class="brand-icon mx-auto mb-2 bg-warning text-dark">
+              <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h4 class="fw-bold mb-1">Submit Ownership Verification Claim</h4>
+            <p class="small text-white-50 mb-0">VSIT (Vidyalankar School of Information Technology) Admin Protocol</p>
+          </div>
+
+          <div class="card-body p-4 p-md-5">
+            <div class="alert alert-warning border-0 small mb-4 d-flex align-items-start gap-2">
+              <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 text-warning"></i>
+              <div>
+                <strong>Confidential Verification:</strong> 
+                The administration validates claims using private identifying features that were not disclosed in the public listing. Submitting fraudulent claims is a violation of the campus honor code.
+              </div>
+            </div>
+
+            <form method="POST">
+              <!-- Rationale -->
+              <div class="mb-3">
+                <label for="claim_reason" class="form-label fw-semibold">
+                  Why do you believe this item belongs to you? *
+                </label>
+                <textarea class="form-control" id="claim_reason" name="claim_reason" rows="3" placeholder="Explain when and where you lost it, brand, distinctive appearance, etc..." required minlength="10"></textarea>
+                <div class="form-text">Provide sufficient context to substantiate your claim (at least 10 characters).</div>
+              </div>
+
+              <!-- Private Identifying Detail -->
+              <div class="mb-3">
+                <label for="private_detail" class="form-label fw-semibold text-danger">
+                  <i class="bi bi-key-fill me-1"></i> Private Identifying Detail * (Confidential)
+                </label>
+                <textarea class="form-control border-danger" id="private_detail" name="private_detail" rows="2" placeholder="e.g. Serial number ending in 459, lockscreen photo of a golden retriever, receipt in inner zipper, specific scratch on underside..." required minlength="5"></textarea>
+                <div class="form-text text-danger">
+                  This detail will ONLY be viewed by college administrators to verify your ownership.
+                </div>
+              </div>
+
+              <!-- Supporting Information -->
+              <div class="mb-3">
+                <label for="supporting_information" class="form-label fw-semibold">
+                  Supporting Information <small class="text-muted">(Optional)</small>
+                </label>
+                <textarea class="form-control" id="supporting_information" name="supporting_information" rows="2" placeholder="Invoice numbers, purchase date, student roll number if on ID card, etc..."></textarea>
+              </div>
+
+              <!-- Preferred Contact Method -->
+              <div class="mb-4">
+                <label for="contact_preference" class="form-label fw-semibold">
+                  Preferred Contact Method
+                </label>
+                <input type="text" class="form-control" id="contact_preference" name="contact_preference" placeholder="e.g. Campus email / WhatsApp at +91 98765 43210">
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <a href="{{ url_for('item.item_details', item_id=item.id) }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                <button type="submit" class="btn btn-orange rounded-pill px-5 py-2 fw-bold shadow-sm">
+                  <i class="bi bi-shield-check me-1"></i> Submit Claim
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- My Claims List View -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="section-title mb-1">My Submitted Claims</h2>
+        <p class="text-muted mb-0">Track verification status and administrative comments for your claim requests</p>
+      </div>
+      <a href="{{ url_for('item.search') }}" class="btn btn-outline-navy btn-sm rounded-pill px-3">
+        Search Catalog
+      </a>
+    </div>
+
+    {% if claims %}
+      <div class="row g-4">
+        {% for claim in claims %}
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <span class="badge bg-light text-navy border mb-1">Claim #{{ claim.id }}</span>
+                  <h5 class="fw-bold text-navy mb-0">
+                    <a href="{{ url_for('item.item_details', item_id=claim.item.id) }}" class="text-decoration-none">
+                      {{ claim.item.item_name }}
+                    </a>
+                  </h5>
+                  <small class="text-muted">{{ claim.item.category }} &bull; Found at: {{ claim.item.location }}</small>
+                </div>
+                <span class="badge {% if claim.status == 'Approved' %}bg-success{% elif claim.status == 'Rejected' %}bg-danger{% elif claim.status == 'Completed' %}bg-primary{% else %}bg-warning text-dark{% endif %} px-3 py-2 rounded-pill fw-bold">
+                  {{ claim.status }}
+                </span>
+              </div>
+
+              <div class="p-3 bg-light rounded-3 mb-3 small">
+                <div class="mb-1"><strong>Your Explanation:</strong> {{ claim.claim_reason }}</div>
+                <div class="text-muted"><strong>Confidential Mark Submitted:</strong> {{ claim.private_detail }}</div>
+              </div>
+
+              {% if claim.admin_comment %}
+                <div class="p-3 border rounded-3 mb-3 small {% if claim.status == 'Approved' %}bg-success bg-opacity-10 border-success{% elif claim.status == 'Rejected' %}bg-danger bg-opacity-10 border-danger{% else %}bg-info bg-opacity-10{% endif %}">
+                  <div class="fw-bold mb-1"><i class="bi bi-chat-quote-fill me-1"></i> Admin Note:</div>
+                  <div>{{ claim.admin_comment }}</div>
+                </div>
+              {% endif %}
+
+              <div class="mt-auto d-flex justify-content-between align-items-center text-muted small border-top pt-3">
+                <span><i class="bi bi-clock me-1"></i> Submitted: {{ claim.created_at | format_date }}</span>
+                <a href="{{ url_for('item.item_details', item_id=claim.item.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                  View Item <i class="bi bi-chevron-right ms-1"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="bi bi-shield-x"></i>
+        </div>
+        <h4 class="empty-state-title">No Claims Submitted</h4>
+        <p class="empty-state-desc">You have not filed ownership claims on any found items yet. If you spot your lost item in the catalog, submit a claim for administrative verification.</p>
+        <a href="{{ url_for('item.search') }}" class="btn btn-orange rounded-pill px-4">Browse Found Catalog</a>
+      </div>
+    {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}

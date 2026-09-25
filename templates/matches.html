@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Matches - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="section-title mb-1">Smart Match Discoveries</h2>
+      <p class="text-muted mb-0">
+        Automated comparisons pairing reported Lost items with Found campus objects based on explainable scoring
+      </p>
+    </div>
+    <a href="{{ url_for('main.about') }}#matching" class="btn btn-outline-navy btn-sm rounded-pill px-3">
+      <i class="bi bi-info-circle me-1"></i> How Matching Works
+    </a>
+  </div>
+
+  {% if matches %}
+    <div class="d-flex flex-column gap-4">
+      {% for match in matches %}
+        <div class="match-card">
+          <!-- Match Score Header -->
+          <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 border-bottom mb-3 gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="match-score-badge fs-6 py-2 px-3">
+                <i class="bi bi-magic"></i> {{ match.match_score }}% Match Confidence
+              </span>
+              <span class="text-muted small">Discovered {{ match.created_at | format_date }}</span>
+            </div>
+            
+            <div class="small bg-light px-3 py-1 rounded-pill border">
+              <strong>Match Factors:</strong> {{ match.match_reason }}
+            </div>
+          </div>
+
+          <!-- Paired Items Comparison -->
+          <div class="row g-3 align-items-stretch">
+            <!-- Lost Item Card -->
+            <div class="col-md-6">
+              <div class="p-3 border rounded-3 bg-light h-100 position-relative">
+                <span class="badge bg-danger mb-2">Lost Report #{{ match.lost_item.id }}</span>
+                <h5 class="fw-bold text-navy mb-2">
+                  <a href="{{ url_for('item.item_details', item_id=match.lost_item.id) }}" class="text-decoration-none">
+                    {{ match.lost_item.item_name }}
+                  </a>
+                </h5>
+                <p class="small text-muted mb-3">{{ match.lost_item.description }}</p>
+
+                <div class="small d-flex flex-column gap-1 text-muted mb-3">
+                  <div><strong>Category:</strong> {{ match.lost_item.category }}</div>
+                  <div><strong>Location:</strong> {{ match.lost_item.location }}</div>
+                  <div><strong>Date Lost:</strong> {{ match.lost_item.item_date | format_date }}</div>
+                  <div><strong>Reported By:</strong> {{ match.lost_item.reporter.full_name }}</div>
+                </div>
+
+                <a href="{{ url_for('item.item_details', item_id=match.lost_item.id) }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                  View Lost Report <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Found Item Card -->
+            <div class="col-md-6">
+              <div class="p-3 border rounded-3 bg-light h-100 position-relative">
+                <span class="badge bg-success mb-2">Found Report #{{ match.found_item.id }}</span>
+                <h5 class="fw-bold text-navy mb-2">
+                  <a href="{{ url_for('item.item_details', item_id=match.found_item.id) }}" class="text-decoration-none">
+                    {{ match.found_item.item_name }}
+                  </a>
+                </h5>
+                <p class="small text-muted mb-3">{{ match.found_item.description }}</p>
+
+                <div class="small d-flex flex-column gap-1 text-muted mb-3">
+                  <div><strong>Category:</strong> {{ match.found_item.category }}</div>
+                  <div><strong>Location:</strong> {{ match.found_item.location }}</div>
+                  <div><strong>Date Found:</strong> {{ match.found_item.item_date | format_date }}</div>
+                  <div><strong>Reported By:</strong> {{ match.found_item.reporter.full_name }}</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <a href="{{ url_for('item.item_details', item_id=match.found_item.id) }}" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                    View Found Item <i class="bi bi-arrow-right ms-1"></i>
+                  </a>
+                  {% if current_user and current_user.id != match.found_item.reporter_id and match.found_item.is_claimable %}
+                    <a href="{{ url_for('claim.submit_claim', item_id=match.found_item.id) }}" class="btn btn-sm btn-orange rounded-pill px-3">
+                      Claim This Item
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-stars"></i>
+      </div>
+      <h4 class="empty-state-title">No High-Confidence Matches Yet</h4>
+      <p class="empty-state-desc">The matching engine pairs reports that score 50 points or above based on category, item name, brand, color, and location similarity. Check back soon as more campus items are logged!</p>
+      <a href="{{ url_for('item.search') }}" class="btn btn-outline-navy rounded-pill px-4">Browse All Catalog Items</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

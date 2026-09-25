@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Claim Verification Management - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Admin Navigation Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none">Admin Console</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Claim Verification</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="section-title mb-1">Administrative Claim Verification</h2>
+      <p class="text-muted mb-0">Cross-examine confidential identifying marks and authorize rightful ownership releases</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-navy btn-sm rounded-pill px-3">
+      <i class="bi bi-speedometer2 me-1"></i> Dashboard
+    </a>
+  </div>
+
+  <!-- Status Filter Pills -->
+  <ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+      <a class="nav-link {% if selected_status == 'Pending' %}active{% endif %}" href="{{ url_for('admin.claims', status='Pending') }}">Pending Verification</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_status == 'Approved' %}active{% endif %}" href="{{ url_for('admin.claims', status='Approved') }}">Approved Claims</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_status == 'Completed' %}active{% endif %}" href="{{ url_for('admin.claims', status='Completed') }}">Completed / Returned</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_status == 'Rejected' %}active{% endif %}" href="{{ url_for('admin.claims', status='Rejected') }}">Rejected Claims</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_status == 'All' %}active{% endif %}" href="{{ url_for('admin.claims', status='All') }}">All Claims</a>
+    </li>
+  </ul>
+
+  {% if claims %}
+    <div class="row g-4">
+      {% for claim in claims %}
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <span class="badge bg-light text-navy border mb-1">Claim #{{ claim.id }}</span>
+                <h5 class="fw-bold text-navy mb-0">
+                  <a href="{{ url_for('item.item_details', item_id=claim.item.id) }}" class="text-decoration-none">
+                    {{ claim.item.item_name }}
+                  </a>
+                </h5>
+                <small class="text-muted">{{ claim.item.category }} &bull; Found at: {{ claim.item.location }}</small>
+              </div>
+              <span class="badge {% if claim.status == 'Approved' %}bg-success{% elif claim.status == 'Rejected' %}bg-danger{% elif claim.status == 'Completed' %}bg-primary{% else %}bg-warning text-dark{% endif %} px-3 py-2 rounded-pill fw-bold">
+                {{ claim.status }}
+              </span>
+            </div>
+
+            <!-- Claimant Info (Authorized for Admin) -->
+            <div class="p-3 bg-light rounded-3 mb-3 small">
+              <div class="fw-bold text-navy mb-1"><i class="bi bi-person-badge text-primary me-1"></i> Claimant Details:</div>
+              <div><strong>Name:</strong> {{ claim.claimant.full_name }}</div>
+              <div><strong>Email:</strong> {{ claim.claimant.email }}</div>
+              <div><strong>Department:</strong> {{ claim.claimant.department or 'N/A' }}</div>
+              <div><strong>Phone:</strong> {{ claim.claimant.phone or 'Not provided' }}</div>
+            </div>
+
+            <!-- Rationale & Private Marks -->
+            <div class="mb-3 small">
+              <div class="mb-2">
+                <strong>Claimant's Explanation:</strong><br>
+                <span class="text-muted">{{ claim.claim_reason }}</span>
+              </div>
+              <div class="p-2 border border-danger rounded bg-danger bg-opacity-10 text-danger">
+                <strong><i class="bi bi-shield-lock-fill me-1"></i> Private Identifying Detail:</strong><br>
+                {{ claim.private_detail }}
+              </div>
+              {% if claim.supporting_information %}
+                <div class="mt-2 text-muted">
+                  <strong>Supporting Info:</strong> {{ claim.supporting_information }}
+                </div>
+              {% endif %}
+            </div>
+
+            {% if claim.admin_comment %}
+              <div class="p-2 rounded border bg-light small mb-3">
+                <strong>Admin Decision Note:</strong> {{ claim.admin_comment }}
+              </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+              <small class="text-muted">Submitted {{ claim.created_at | format_date }}</small>
+
+              <div class="d-flex gap-2">
+                {% if claim.status == 'Pending' %}
+                  <button type="button" class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#claimApproveModal{{ claim.id }}">
+                    <i class="bi bi-check-lg"></i> Approve
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#claimRejectModal{{ claim.id }}">
+                    <i class="bi bi-x-lg"></i> Reject
+                  </button>
+                {% elif claim.status == 'Approved' and claim.item.status != 'Returned' %}
+                  <form method="POST" action="{{ url_for('admin.mark_returned', item_id=claim.item.id) }}">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" onclick="return confirm('Confirm item returned to owner?')">
+                      <i class="bi bi-box-arrow-down me-1"></i> Mark as Handed Over / Returned
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claim Approve Modal -->
+        <div class="modal fade" id="claimApproveModal{{ claim.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('admin.approve_claim', claim_id=claim.id) }}">
+                <div class="modal-header">
+                  <h5 class="modal-title fw-bold text-success"><i class="bi bi-check-circle me-1"></i> Approve Claim #{{ claim.id }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Authorize verification for claimant <strong>{{ claim.claimant.full_name }}</strong> regarding item <strong>{{ claim.item.item_name }}</strong>.</p>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Pickup / Verification Comment</label>
+                    <textarea name="admin_comment" class="form-control" rows="3" placeholder="Visit Admin Block Room 104 with your student ID to claim this item."></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-success">Confirm Approval</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claim Reject Modal -->
+        <div class="modal fade" id="claimRejectModal{{ claim.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('admin.reject_claim', claim_id=claim.id) }}">
+                <div class="modal-header">
+                  <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-1"></i> Reject Claim #{{ claim.id }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Reject verification for <strong>{{ claim.claimant.full_name }}</strong>.</p>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Reason for Rejection</label>
+                    <textarea name="admin_comment" class="form-control" rows="3" placeholder="Identifying details do not match the physical object."></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-clipboard2-check"></i>
+      </div>
+      <h4 class="empty-state-title">No Claims in this Category</h4>
+      <p class="empty-state-desc">There are no claims currently in the '{{ selected_status }}' status category.</p>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-navy rounded-pill px-4">Back to Dashboard</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

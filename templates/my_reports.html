@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}My Reports - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="section-title mb-1">My Submitted Reports</h2>
+      <p class="text-muted mb-0">Manage and track the lost and found items you have reported on campus</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('item.report_lost') }}" class="btn btn-danger btn-sm rounded-pill px-3">
+        <i class="bi bi-exclamation-octagon me-1"></i> Report Lost
+      </a>
+      <a href="{{ url_for('item.report_found') }}" class="btn btn-success btn-sm rounded-pill px-3">
+        <i class="bi bi-check-circle me-1"></i> Report Found
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Pills -->
+  <ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+      <a class="nav-link {% if not selected_type %}active{% endif %}" href="{{ url_for('item.my_reports') }}">All Reports</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_type == 'Lost' %}active{% endif %}" href="{{ url_for('item.my_reports', type='Lost') }}">Lost Items Only</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if selected_type == 'Found' %}active{% endif %}" href="{{ url_for('item.my_reports', type='Found') }}">Found Items Only</a>
+    </li>
+  </ul>
+
+  {% if reports %}
+    <div class="row g-4">
+      {% for item in reports %}
+        <div class="col-md-6 col-lg-4">
+          <div class="item-card">
+            <div class="item-card-image-wrapper">
+              {% if item.image_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" alt="{{ item.item_name }}" class="item-card-img">
+              {% else %}
+                <div class="item-card-placeholder">
+                  <i class="bi bi-box-seam"></i>
+                </div>
+              {% endif %}
+
+              <span class="item-type-badge {% if item.item_type == 'Lost' %}badge-lost-type{% else %}badge-found-type{% endif %}">
+                {{ item.item_type }}
+              </span>
+
+              <span class="item-status-pill">
+                {{ item.status }}
+              </span>
+            </div>
+
+            <div class="item-card-body">
+              <div class="item-card-category">{{ item.category }}</div>
+              <h5 class="item-card-title">{{ item.item_name }}</h5>
+              <p class="item-card-desc">{{ item.description }}</p>
+
+              <div class="small text-muted mb-3 d-flex flex-column gap-1">
+                <div><i class="bi bi-geo-alt text-danger me-1"></i> {{ item.location }}</div>
+                <div><i class="bi bi-calendar3 text-primary me-1"></i> {{ item.item_date | format_date }}</div>
+              </div>
+
+              <div class="item-card-meta">
+                <div class="d-flex gap-1 w-100 justify-content-between">
+                  <a href="{{ url_for('item.item_details', item_id=item.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    View
+                  </a>
+                  
+                  <div class="d-flex gap-1">
+                    {% if item.status in ['Open', 'Possible Match'] or current_user.is_admin %}
+                      <a href="{{ url_for('item.edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        Edit
+                      </a>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('item.delete_item', item_id=item.id) }}" class="confirm-delete-form" data-item-name="{{ item.item_name }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-folder-x"></i>
+      </div>
+      <h4 class="empty-state-title">No Reports Found</h4>
+      <p class="empty-state-desc">You have not submitted any reports matching this filter. Click below to file a lost or found report.</p>
+      <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('item.report_lost') }}" class="btn btn-danger btn-sm rounded-pill px-4">Report Lost</a>
+        <a href="{{ url_for('item.report_found') }}" class="btn btn-success btn-sm rounded-pill px-4">Report Found</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
