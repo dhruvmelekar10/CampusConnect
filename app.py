@@ -15,7 +15,12 @@ def create_app(config_class=Config):
     """
     Application factory for CampusConnect – Smart Lost and Found Management System.
     """
-    app = Flask(__name__)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    app = Flask(
+        __name__,
+        static_folder=os.path.join(base_dir, 'static'),
+        template_folder=os.path.join(base_dir, 'templates')
+    )
     app.config.from_object(config_class)
 
     # Ensure uploads folder exists
